@@ -1,3 +1,34 @@
 spring:
   application:
     name: ms-calculo-impuestos
+
+  datasource:
+    url: ${URL_BD_IMPUESTOS:jdbc:postgresql://192.168.0.18:5432/impuestos_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:Abc12345}
+    driver-class-name: org.postgresql.Driver
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: ${SHOW_SQL:true}
+
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: ${ISSUER_URI_KEYCLOACK:http://localhost:8180/realms/tuxtepec-gob}
+            jwk-set-uri: ${JWK_SET_URI_KEYCLOACK:http://localhost:8180/realms/tuxtepec-gob/protocol/openid-connect/certs}
+
+  logging:
+    level:
+      org.springframework.security: DEBUG
+      org.springframework.web: INFO
+      liquibase: INFO

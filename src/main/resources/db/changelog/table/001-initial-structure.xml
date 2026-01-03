@@ -1,0 +1,36 @@
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+
+    <changeSet id="001-crear-tabla-municipios" author="Hugo Cobos" dbms="postgresql">
+        <createTable tableName="cat_municipios">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="nombre" type="VARCHAR(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rfc" type="VARCHAR(13)"/>
+        </createTable>
+    </changeSet>
+
+
+    <changeSet id="002-crear-tabla-tarifas-avanzada" author="Hugo Cobos" dbms="postgresql">
+        <createTable tableName="config_tarifas">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="municipio_id" type="UUID">
+                <constraints nullable="false" foreignKeyName="fk_tarifas_municipio" references="cat_municipios(id)"/>
+            </column>
+            <column name="concepto_clave" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anio_fiscal" type="INT"/>
+
+            <column name="tipo_formula" type="VARCHAR(30)"/> <column name="parametros_regla" type="JSONB"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
