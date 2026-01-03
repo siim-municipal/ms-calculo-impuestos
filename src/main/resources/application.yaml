@@ -3,7 +3,7 @@ spring:
     name: ms-calculo-impuestos
 
   datasource:
-    url: ${URL_BD_SECURITY:jdbc:postgresql://192.168.0.18:5432/impuestos_db}
+    url: ${URL_BD_IMPUESTOS:jdbc:postgresql://192.168.0.18:5432/impuestos_db}
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:Abc12345}
     driver-class-name: org.postgresql.Driver
