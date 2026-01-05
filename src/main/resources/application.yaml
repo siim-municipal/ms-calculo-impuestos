@@ -20,12 +20,12 @@ spring:
         format_sql: true
     show-sql: ${SHOW_SQL:true}
 
-    security:
-      oauth2:
-        resourceserver:
-          jwt:
-            issuer-uri: ${ISSUER_URI_KEYCLOACK:http://localhost:8180/realms/tuxtepec-gob}
-            jwk-set-uri: ${JWK_SET_URI_KEYCLOACK:http://localhost:8180/realms/tuxtepec-gob/protocol/openid-connect/certs}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${ISSUER_URI_KEYCLOAK:http://localhost:8180/realms/tuxtepec-gob}
+          jwk-set-uri: ${JWK_SET_URI_KEYCLOAK:http://keycloak:8180/realms/tuxtepec-gob/protocol/openid-connect/certs}
 
   logging:
     level:
