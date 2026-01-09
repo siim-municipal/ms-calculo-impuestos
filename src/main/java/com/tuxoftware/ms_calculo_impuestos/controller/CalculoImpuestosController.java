@@ -23,17 +23,15 @@ public class CalculoImpuestosController {
             @RequestBody SolicitudCalculo solicitud,
             @AuthenticationPrincipal Jwt jwt) {
 
-        // 1. Extraemos el municipio_id del claim que configuraste en Keycloak
-        String municipioIdStr = jwt.getClaimAsString("municipio_id");
+        // 1. Extraemos el municipio_id del claim en Keycloak
+        String municipioAlias = jwt.getClaimAsString("municipio_id");
 
         // Validación de seguridad defensiva
-        if (municipioIdStr == null) {
+        if (municipioAlias == null) {
             throw new RuntimeException("El usuario no tiene un municipio asignado en Keycloak");
         }
 
-        UUID municipioId = UUID.fromString(municipioIdStr);
-
         // 2. Pasamos el ID al servicio para que filtre la base de datos
-        return calculoService.calcularImpuesto(solicitud, municipioId);
+        return calculoService.calcularImpuesto(solicitud, municipioAlias);
     }
 }
