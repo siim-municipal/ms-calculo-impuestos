@@ -1,24 +1,34 @@
-# 🌐 SIIM API Gateway
+### 🧮 MS Cálculo de Impuestos (`ms-calculo-impuesto/README.md`)
 
-Este microservicio actúa como la **puerta de enlace única** (Edge Service) para el ecosistema SIIM (Sistema Integral de Ingresos Municipales). Está construido sobre **Spring Cloud Gateway** (Reactivo/WebFlux) y se encarga del enrutamiento dinámico, seguridad perimetral (OAuth2/JWT) y gestión de tráfico.
+Este es el núcleo lógico. Destacamos el uso de JSONB y el patrón Strategy.
 
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.4.1-green)
-![Spring Cloud](https://img.shields.io/badge/Spring_Cloud-2024.0.0-blue)
-![Security](https://img.shields.io/badge/OAuth2-Resource_Server-red)
+```markdown
+# 🧮 MS Cálculo de Impuestos
 
-## 🚀 Características Principales
+Microservicio encargado de la **lógica fiscal y financiera** del municipio. Utiliza un motor de reglas polimórfico basado en el patrón **Strategy** y almacenamiento **JSONB** para procesar leyes de ingresos complejas (rangos, cuotas fijas, matrices de zonificación) sin recompilar el código.
 
-* **Enrutamiento Centralizado:** Distribuye tráfico a `ms-padron`, `ms-calculo`, etc.
-* **Seguridad OAuth2:** Valida la firma de tokens JWT contra Keycloak antes de permitir el paso.
-* **CORS Global:** Configuración centralizada para permitir peticiones desde el Frontend (Angular).
-* **Rate Limiting:** (Opcional) Protección contra ataques de denegación de servicio.
+![Java](https://img.shields.io/badge/Java-21-orange)
+![Postgres](https://img.shields.io/badge/Postgres-JSONB-blue)
+![Pattern](https://img.shields.io/badge/Pattern-Strategy-purple)
 
-## 🛠️ Arquitectura
+## 🧠 Lógica de Negocio
 
-```mermaid
-graph LR
-    Client[Frontend / App] -->|HTTPS/443| Gateway[API Gateway :8080]
-    Gateway -->|Valida Token| Keycloak[Keycloak IDP]
-    Gateway -->|/api/v1/sujetos| Padron[MS Padrón]
-    Gateway -->|/api/calculos| Calculo[MS Cálculo]
-    Gateway -->|/api/security| Security[MS Security]
+El servicio interpreta dinámicamente la configuración de la tabla `config_tarifas` según el `tipo_formula`:
+
+1.  **CUOTA_FIJA:** Cobros simples (Ej. Copias certificadas).
+2.  **AGUA_RANGOS:** Tarifas escalonadas por consumo de $m^3$.
+3.  **MATRIZ_CONSTRUCCION:** Cálculo complejo por $m^2$, tipo de predio y uso de suelo.
+4.  **BASURA_POR_ZONA:** Tarifas dependientes de la colonia/sector.
+
+## 🗄️ Modelo de Datos (JSONB)
+
+Ejemplo de regla almacenada para **Agua Potable** en PostgreSQL:
+
+```json
+{
+  "unidadValor": "UMA",
+  "rangos": [
+    { "min": 0, "max": 50, "costoUnitario": 0.30 },
+    { "min": 50.01, "max": 100, "costoUnitario": 0.36 }
+  ]
+}
