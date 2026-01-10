@@ -8,6 +8,5 @@
 
     <include file="table/001-initial-structure.xml" relativeToChangelogFile="true"/>
     <include file="seed/001-initial-seed.sql" relativeToChangelogFile="true" />
-    <include file="change/001-add-column-descripcion.xml" relativeToChangelogFile="true" />
 
 </databaseChangeLog>
