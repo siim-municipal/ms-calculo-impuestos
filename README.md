@@ -1,7 +1,3 @@
-### 🧮 MS Cálculo de Impuestos (`ms-calculo-impuesto/README.md`)
-
-Este es el núcleo lógico. Destacamos el uso de JSONB y el patrón Strategy.
-
 ```markdown
 # 🧮 MS Cálculo de Impuestos
 
