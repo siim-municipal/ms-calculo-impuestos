@@ -38,7 +38,7 @@ public class CalculoBasuraZonaStrategy implements CalculoStrategy {
         // Construcción completa del resultado
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
-                .descripcion(tarifa.getDescripcion()) // <--- ¡Aquí agregamos lo que faltaba!
+                .descripcion(tarifa.getDescripcion())
                 .subtotal(total)
                 .total(total)
                 .metodoCalculo("BASURA_POR_ZONA")

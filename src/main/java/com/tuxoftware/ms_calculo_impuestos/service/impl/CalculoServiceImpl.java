@@ -3,7 +3,9 @@ package com.tuxoftware.ms_calculo_impuestos.service.impl;
 import com.tuxoftware.ms_calculo_impuestos.dto.ResultadoCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.SolicitudCalculo;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
+import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Uma;
 import com.tuxoftware.ms_calculo_impuestos.persistence.repository.TarifasRepository;
+import com.tuxoftware.ms_calculo_impuestos.persistence.repository.UmaRepository;
 import com.tuxoftware.ms_calculo_impuestos.service.CalculoService;
 import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import com.tuxoftware.ms_calculo_impuestos.service.MunicipioService;
@@ -20,15 +22,16 @@ public class CalculoServiceImpl implements CalculoService {
     private final TarifasRepository tarifaRepository;
     private final CalculoStrategyFactory strategyFactory;
     private final MunicipioService municipioService;
+    private final UmaRepository umaRepository;
 
-    // Valor UMA 2024
-    // TODO: (Idealmente traer de BD)
-    private static final BigDecimal VALOR_UMA_2025 = new BigDecimal("108.57");
-
-    public CalculoServiceImpl(TarifasRepository tarifaRepository, CalculoStrategyFactory strategyFactory, MunicipioService municipioService) {
+    public CalculoServiceImpl(TarifasRepository tarifaRepository,
+                              CalculoStrategyFactory strategyFactory,
+                              MunicipioService municipioService,
+                              UmaRepository umaRepository) {
         this.tarifaRepository = tarifaRepository;
         this.strategyFactory = strategyFactory;
         this.municipioService = municipioService;
+        this.umaRepository = umaRepository;
     }
 
     @Override
@@ -37,6 +40,10 @@ public class CalculoServiceImpl implements CalculoService {
         int anio = (solicitud.getAnioFiscal() != null) ? solicitud.getAnioFiscal() : LocalDate.now().getYear();
 
         UUID municipioId = municipioService.getUuidFromAlias(municipioAlias);
+
+        BigDecimal valorUma = umaRepository.findByAnio(anio)
+                .map(Uma::getValorDiario)
+                .orElseThrow(() -> new RuntimeException("No hay UMA registrada para el año " + anio));
 
         // 2. Buscar Tarifa (ahora trae JSONB)
         Tarifa tarifa = tarifaRepository.findByClaveConceptoAndMunicipioIdAndAnioFiscal(
@@ -49,6 +56,6 @@ public class CalculoServiceImpl implements CalculoService {
         CalculoStrategy estrategia = strategyFactory.getEstrategia(tarifa.getTipoFormula());
 
         // 4. Ejecutar cálculo
-        return estrategia.calcular(solicitud, tarifa, VALOR_UMA_2025);
+        return estrategia.calcular(solicitud, tarifa, valorUma);
     }
 }

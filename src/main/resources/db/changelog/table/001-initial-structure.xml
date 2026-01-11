@@ -28,9 +28,95 @@
                 <constraints nullable="false"/>
             </column>
             <column name="anio_fiscal" type="INT"/>
-
-            <column name="tipo_formula" type="VARCHAR(30)"/> <column name="parametros_regla" type="JSONB"/>
+            <column name="descripcion" type="VARCHAR(255)"/>
+            <column name="tipo_formula" type="VARCHAR(30)"/>
+            <column name="parametros_regla" type="JSONB"/>
         </createTable>
+    </changeSet>
+
+    <changeSet id="003-crear-tablas-operativas-calculo" author="Hugo Cobos">
+        <createTable tableName="solicitudes_construccion">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="predio_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tipo_tramite" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="metros_construccion" type="DECIMAL(10, 2)"/>
+            <column name="costo_presupuestado" type="DECIMAL(18, 2)"/>
+            <column name="fecha_solicitud" type="DATE"/>
+            <column name="estatus_tramite" type="VARCHAR(30)"/>
+            <column name="dro_id" type="UUID"/>
+        </createTable>
+
+        <createIndex tableName="solicitudes_construccion" indexName="idx_construccion_predio">
+            <column name="predio_id"/>
+        </createIndex>
+
+
+        <createTable tableName="calculos_realizados">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="clave_concepto" type="VARCHAR(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="referencia_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="anio_fiscal" type="INT"/>
+            <column name="monto_base" type="DECIMAL(18, 2)"/>
+            <column name="impuesto_calculado" type="DECIMAL(18, 2)"/>
+            <column name="recargos" type="DECIMAL(18, 2)"/>
+            <column name="multas" type="DECIMAL(18, 2)"/>
+            <column name="descuentos" type="DECIMAL(18, 2)"/>
+            <column name="total_pagar" type="DECIMAL(18, 2)">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="desglose_json" type="JSONB"/>
+
+            <column name="fecha_calculo" type="DATETIME"/>
+            <column name="usuario_calculo" type="VARCHAR(100)"/>
+        </createTable>
+
+        <createIndex tableName="calculos_realizados" indexName="idx_calculo_referencia">
+            <column name="referencia_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="006-crear-tabla-uma" author="Hugo Cobos">
+        <createTable tableName="cat_uma">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="anio" type="INT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="valor_diario" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor_mensual" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor_anual" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fecha_inicio_vigencia" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fecha_fin_vigencia" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activo" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+
+        <createIndex tableName="cat_uma" indexName="idx_uma_anio">
+            <column name="anio"/>
+        </createIndex>
     </changeSet>
 
 </databaseChangeLog>

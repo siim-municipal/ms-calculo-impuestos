@@ -26,8 +26,8 @@ public class SolicitudCalculo {
      * Es la medida continua sobre la que se aplican rangos o porcentajes.
      * * Ejemplos de uso según el trámite:
      * - Agua Potable: Aquí envías los m3 consumidos (Ej. 65.50).
-     * - Construcción: Aquí envías los m2 de superficie (Ej. 120.00)[cite: 733].
-     * - Licencias Comerciales: Aquí envías los m2 del local o el monto de inversión[cite: 742].
+     * - Construcción: Aquí envías los m2 de superficie (Ej. 120.00)
+     * - Licencias Comerciales: Aquí envías los m2 del local o el monto de inversión
      * * Puede ser nulo si el trámite es solo una Cuota Fija simple.
      */
     private BigDecimal baseCalculo;
