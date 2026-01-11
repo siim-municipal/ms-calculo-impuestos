@@ -88,4 +88,35 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="006-crear-tabla-uma" author="Hugo Cobos">
+        <createTable tableName="cat_uma">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="anio" type="INT">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="valor_diario" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor_mensual" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valor_anual" type="DECIMAL(10, 2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fecha_inicio_vigencia" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="fecha_fin_vigencia" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="activo" type="BOOLEAN" defaultValueBoolean="true"/>
+        </createTable>
+
+        <createIndex tableName="cat_uma" indexName="idx_uma_anio">
+            <column name="anio"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

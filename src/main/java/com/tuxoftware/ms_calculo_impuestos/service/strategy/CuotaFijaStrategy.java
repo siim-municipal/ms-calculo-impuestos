@@ -14,7 +14,7 @@ public class CuotaFijaStrategy implements CalculoStrategy {
 
     @Override
     public ResultadoCalculo calcular(SolicitudCalculo solicitud, Tarifa tarifa, BigDecimal valorUma) {
-        // 1. Leer el JSON: { "valor": 1.5, "unidad": "UMA" }
+        // 1. Leer el JSON: {"valor": 1.5, "unidad": "UMA"}
         JsonNode json = tarifa.getParametrosRegla();
         BigDecimal valorUnitario = new BigDecimal(json.get("valor").asText());
         String unidad = json.get("unidad").asText();
