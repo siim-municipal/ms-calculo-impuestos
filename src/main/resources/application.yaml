@@ -36,3 +36,10 @@ spring:
 app:
   security:
     client-id: ${KEYCLOAK_CLIENT_ID:siim-frontend}
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/} # Apunta a ms-discovery
+  instance:
+    prefer-ip-address: true # Vital para Docker

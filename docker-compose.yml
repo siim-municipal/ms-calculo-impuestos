@@ -19,6 +19,8 @@ services:
 
       - KEYCLOAK_CLIENT_ID=${KEYCLOAK_CLIENT_ID}
 
+      - EUREKA_URI=${EUREKA_URI}
+
     networks:
       - siim-network
 
