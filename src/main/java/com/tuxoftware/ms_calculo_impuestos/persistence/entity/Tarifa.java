@@ -44,4 +44,7 @@ public class Tarifa {
     @Column(name = "parametros_regla", columnDefinition = "jsonb")
     @JdbcTypeCode(SqlTypes.JSON)
     private JsonNode parametrosRegla;
+
+    @Column(name = "aplica_adicional")
+    private Boolean aplicaAdicional;
 }

@@ -12,4 +12,6 @@ public interface UmaRepository extends JpaRepository<Uma, UUID> {
 
     @Query("SELECT u FROM Uma u WHERE u.activo = true")
     Optional<Uma> findUmaVigente();
+
+    Optional<Uma> findTopByOrderByAnioDesc();
 }

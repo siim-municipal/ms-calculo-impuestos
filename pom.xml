@@ -5,8 +5,8 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.9</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<version>3.4.1</version>
+		<relativePath/>
 	</parent>
 	<groupId>com.tuxoftware</groupId>
 	<artifactId>ms-calculo-impuestos</artifactId>
