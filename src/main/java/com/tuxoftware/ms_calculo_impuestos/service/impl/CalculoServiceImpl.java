@@ -1,7 +1,7 @@
 package com.tuxoftware.ms_calculo_impuestos.service.impl;
 
-import com.tuxoftware.ms_calculo_impuestos.dto.ResultadoCalculo;
-import com.tuxoftware.ms_calculo_impuestos.dto.SolicitudCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.ResultadoCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.request.SolicitudCalculo;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Uma;
 import com.tuxoftware.ms_calculo_impuestos.persistence.repository.TarifasRepository;

@@ -1,4 +1,4 @@
-package com.tuxoftware.ms_calculo_impuestos.dto;
+package com.tuxoftware.ms_calculo_impuestos.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

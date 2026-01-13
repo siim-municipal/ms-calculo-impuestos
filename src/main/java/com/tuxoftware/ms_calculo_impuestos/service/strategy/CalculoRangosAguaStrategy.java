@@ -1,8 +1,8 @@
 package com.tuxoftware.ms_calculo_impuestos.service.strategy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tuxoftware.ms_calculo_impuestos.dto.ResultadoCalculo;
-import com.tuxoftware.ms_calculo_impuestos.dto.SolicitudCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.ResultadoCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.request.SolicitudCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.rules.ConfigRangos;
 import com.tuxoftware.ms_calculo_impuestos.dto.rules.Rango;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
