@@ -8,6 +8,7 @@ import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Iterator;
 
 @Component
@@ -48,8 +49,8 @@ public class RangosConExcedenteStrategy implements CalculoStrategy {
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
                 .descripcion(tarifa.getDescripcion())
-                .subtotal(total)
-                .total(total)
+                .subtotal(total.setScale(2, RoundingMode.HALF_UP))
+                .total(total.setScale(2, RoundingMode.HALF_UP))
                 .metodoCalculo("RANGOS_CON_EXCEDENTE")
                 .detalles(String.format("Base: $%s. Rango aplicado con tasa del %s%% sobre excedente.",
                         baseGravable,

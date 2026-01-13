@@ -7,6 +7,7 @@ import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
 import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Component
 public class MapaValoresStrategy implements CalculoStrategy {
@@ -30,8 +31,8 @@ public class MapaValoresStrategy implements CalculoStrategy {
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
                 .descripcion(tarifa.getDescripcion())
-                .subtotal(total)
-                .total(total)
+                .subtotal(total.setScale(2, RoundingMode.HALF_UP))
+                .total(total.setScale(2, RoundingMode.HALF_UP))
                 .metodoCalculo("MAPA_VALORES")
                 .detalles(String.format("Giro: %s. Trámite: %s. Cuota: %s UMA", giro, tipoTramite, cuotaUma))
                 .build();
