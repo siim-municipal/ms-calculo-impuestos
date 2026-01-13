@@ -17,6 +17,9 @@ public class PorcentajeConMinimoStrategy implements CalculoStrategy {
         BigDecimal tasa = new BigDecimal(json.get("tasa").asText());
         BigDecimal minimoUma = new BigDecimal(json.get("minimo_uma").asText());
 
+        if (solicitud.getBaseCalculo() == null) {
+            throw new IllegalArgumentException("Este concepto requiere una base de cálculo (Valor Catastral).");
+        }
         BigDecimal base = solicitud.getBaseCalculo(); // Valor Catastral
 
         BigDecimal impuestoCalculado = base.multiply(tasa);

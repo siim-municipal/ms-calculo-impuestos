@@ -18,7 +18,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
                      gen_random_uuid(),
                      v_municipio_id,
@@ -37,7 +38,8 @@ DO $$
                          {"min": 751, "max": 1000, "costoUnitario": 0.49},
                          {"min": 1001.01, "max": 99999999, "costoUnitario": 0.52}
                        ]
-                     }'::jsonb
+                     }'::jsonb,
+                  false
                  );
 
         -- ==================================================================================
@@ -50,7 +52,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
                      gen_random_uuid(),
                      v_municipio_id,
@@ -69,7 +72,8 @@ DO $$
                          {"lim_inf": 1000000.01, "lim_sup": 2900000.00, "cuota_fija": 0, "tasa_excedente": 0.030},
                          {"lim_inf": 2900000.01, "lim_sup": 999999999.99, "cuota_fija": 0, "tasa_excedente": 0.035}
                        ]
-                     }'::jsonb
+                     }'::jsonb,
+                  false
                  );
 
         -- ==================================================================================
@@ -82,7 +86,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
                      gen_random_uuid(),
                      v_municipio_id,
@@ -98,8 +103,10 @@ DO $$
                          "CANTINA": {"expedicion": 199, "revalidacion": 66},
                          "DISCOTECA": {"expedicion": 3020, "revalidacion": 292},
                          "MINISUPER": {"expedicion": 1007, "revalidacion": 161}
-                       }
-                     }'::jsonb
+                       },
+                        "tipo_objeto": "LICENCIA"
+                     }'::jsonb,
+                    true
                  );
 
         -- ==================================================================================
@@ -112,7 +119,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
                      gen_random_uuid(),
                      v_municipio_id,
@@ -123,8 +131,10 @@ DO $$
                      '{
                        "tasa": 0.005,
                        "minimo_uma": 4.6,
-                       "base": "VALOR_CATASTRAL"
-                     }'::jsonb
+                       "base": "VALOR_CATASTRAL",
+                       "tipo_objeto": "PREDIO"
+                     }'::jsonb,
+                  true
                  );
 
         -- ==================================================================================
@@ -137,7 +147,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
                      gen_random_uuid(),
                      v_municipio_id,
@@ -179,7 +190,8 @@ DO $$
                            "costo_excedente": 0.11
                          }
                        }
-                     }'::jsonb
+                     }'::jsonb,
+                  false
                  );
 
         -- 7. TRÁMITES SIMPLES (Estrategia: CuotaFijaStrategy)
@@ -190,7 +202,8 @@ DO $$
             anio_fiscal,
             descripcion,
             tipo_formula,
-            parametros_regla
+            parametros_regla,
+            aplica_adicional
         ) VALUES (
          gen_random_uuid(),
          v_municipio_id,
@@ -201,11 +214,32 @@ DO $$
          '{
            "valor": 0.011,
            "unidad": "UMA"
-         }'::jsonb
+         }'::jsonb,
+        false
      );
 
-    INSERT INTO config_tarifas (id, municipio_id, concepto_clave, anio_fiscal, descripcion, tipo_formula, parametros_regla)
-    VALUES (gen_random_uuid(), v_municipio_id, 'ASEO_COMERCIAL', 2025, 'Recolección Basura Comercial', 'BASURA_POR_ZONA',
-            '{ "zonas": { "CENTRO": 5.5, "COLONIA_A": 3.2, "COLONIA_B": 2.1 }, "default": 2.0 }'::jsonb);
+    INSERT INTO config_tarifas (
+            id,
+            municipio_id,
+            concepto_clave,
+            anio_fiscal,
+            descripcion,
+            tipo_formula,
+            parametros_regla,
+            aplica_adicional
+    )
+    VALUES (
+            gen_random_uuid(),
+            v_municipio_id,
+            'ASEO_COMERCIAL',
+            2025,
+            'Recolección Basura Comercial',
+            'BASURA_POR_ZONA',
+            '{
+                "zonas":
+                    { "CENTRO": 5.5, "COLONIA_A": 3.2, "COLONIA_B": 2.1 },
+                "default": 2.0 }'::jsonb,
+            false
+           );
 
     END $$;

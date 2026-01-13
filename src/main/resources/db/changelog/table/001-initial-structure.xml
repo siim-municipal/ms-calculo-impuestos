@@ -31,6 +31,8 @@
             <column name="descripcion" type="VARCHAR(255)"/>
             <column name="tipo_formula" type="VARCHAR(30)"/>
             <column name="parametros_regla" type="JSONB"/>
+            <column name="aplica_adicional" type="BOOLEAN"/>
+
         </createTable>
     </changeSet>
 

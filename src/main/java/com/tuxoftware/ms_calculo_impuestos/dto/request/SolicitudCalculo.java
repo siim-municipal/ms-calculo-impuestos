@@ -32,6 +32,9 @@ public class SolicitudCalculo {
      */
     private BigDecimal baseCalculo;
 
+    /** ID del Predio o Licencia en el MS-PADRON */
+    private String referenciaId;
+
     /**
      * Parámetros dinámicos para reglas específicas del municipio.
      * Ej: "zona": "CENTRO", "giro": "HOTEL".
