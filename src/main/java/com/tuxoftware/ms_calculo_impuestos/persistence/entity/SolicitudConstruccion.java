@@ -1,5 +1,6 @@
 package com.tuxoftware.ms_calculo_impuestos.persistence.entity;
 
+import com.tuxoftware.ms_calculo_impuestos.enums.EstadoConstruccion;
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
@@ -19,27 +20,33 @@ public class SolicitudConstruccion {
     private UUID id;
 
     @Column(name = "predio_id", nullable = false)
-    private UUID predioId; // Referencia a ms-padron
+    private UUID predioId;
 
-    // Ejemplo: OBRA_NUEVA, AMPLIACION, BARDA, DEMOLICION
+    // Ejemplo: OBRA_NUEVA, AMPLIACION, REGULARIZACION
     @Column(name = "tipo_tramite", nullable = false)
     private String tipoTramite;
+
+    // Valores esperados: HABITACIONAL, COMERCIAL, INDUSTRIAL, BARDAS
+    @Column(name = "subtipo_obra", nullable = false)
+    private String subtipoObra;
 
     @Column(name = "metros_construccion", precision = 10, scale = 2)
     private BigDecimal metrosConstruccion;
 
-    // Algunos incisos del Art. 31 cobran sobre el valor de la obra
+    // Este es el valor de la obra declarado por el arquitecto (Base Gravable en algunos casos)
     @Column(name = "costo_presupuestado", precision = 18, scale = 2)
     private BigDecimal costoPresupuestado;
+
+    @Column(name = "total_impuesto", precision = 18, scale = 2)
+    private BigDecimal totalImpuesto;
 
     @Column(name = "fecha_solicitud")
     private LocalDate fechaSolicitud;
 
-    // PENDIENTE_PAGO, PAGADO, AUTORIZADO, RECHAZADO
-    @Column(name = "estatus_tramite")
-    private String estatusTramite;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estatus_tramite", nullable = false)
+    private EstadoConstruccion estatusTramite;
 
-    // ID del Director Responsable de Obra (DRO) si aplica
     @Column(name = "dro_id")
     private UUID droId;
 }

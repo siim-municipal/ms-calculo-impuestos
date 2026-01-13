@@ -52,6 +52,10 @@
             <column name="fecha_solicitud" type="DATE"/>
             <column name="estatus_tramite" type="VARCHAR(30)"/>
             <column name="dro_id" type="UUID"/>
+            <column name="subtipo_obra" type="VARCHAR(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="total_impuesto" type="DECIMAL(18, 2)"/>
         </createTable>
 
         <createIndex tableName="solicitudes_construccion" indexName="idx_construccion_predio">
