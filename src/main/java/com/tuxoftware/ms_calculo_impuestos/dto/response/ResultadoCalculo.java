@@ -1,4 +1,4 @@
-package com.tuxoftware.ms_calculo_impuestos.dto;
+package com.tuxoftware.ms_calculo_impuestos.dto.response;
 
 import lombok.Builder;
 import lombok.Data;
