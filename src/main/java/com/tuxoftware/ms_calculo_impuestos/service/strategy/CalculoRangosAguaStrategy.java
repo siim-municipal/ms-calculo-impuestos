@@ -48,11 +48,11 @@ public class CalculoRangosAguaStrategy implements CalculoStrategy {
         // 6. Construir respuesta completa
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
-                .descripcion(tarifa.getDescripcion()) // ¡Importante para que el frontend sepa qué es!
-                .subtotal(total)
-                .total(total)
+                .descripcion(tarifa.getDescripcion())
+                .subtotal(total.setScale(2, RoundingMode.HALF_UP))
+                .total(total.setScale(2, RoundingMode.HALF_UP))
                 .metodoCalculo("AGUA_RANGOS")
-                .detalles(String.format("Consumo: %s m3. Tarifa aplicada: %s UMA/m3 (Rango detectado)", consumo, factorUma))
+                .detalles(String.format("Consumo: %s m3. Tarifa aplicada: %.2f UMA/m3 (Rango detectado)", consumo, factorUma))
                 .build();
     }
 

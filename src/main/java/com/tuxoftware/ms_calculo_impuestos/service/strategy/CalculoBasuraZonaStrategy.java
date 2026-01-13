@@ -8,6 +8,7 @@ import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Component
 public class CalculoBasuraZonaStrategy implements CalculoStrategy {
@@ -23,16 +24,15 @@ public class CalculoBasuraZonaStrategy implements CalculoStrategy {
         }
 
         // Buscar el valor en el JSON
-        double cuotaUma = config.path("zonas").path(zonaSolicitada).asDouble();
+        BigDecimal cuotaUma = new BigDecimal(config.path("zonas").path(zonaSolicitada).asText("0"));
 
         // Si no encuentra la zona, usa el default
-        if (cuotaUma == 0) {
-            cuotaUma = config.path("default").asDouble();
-            // Opcional: indicar en el detalle que se usó la tarifa default
+        if (cuotaUma.compareTo(BigDecimal.ZERO) == 0) {
+            cuotaUma = new BigDecimal(config.path("default").asText("0"));
             zonaSolicitada = zonaSolicitada + " (No encontrada, aplicando tarifa general)";
         }
 
-        BigDecimal total = new BigDecimal(cuotaUma).multiply(valorUma);
+        BigDecimal total = cuotaUma.multiply(valorUma).setScale(2, RoundingMode.HALF_UP);
 
         // Construcción completa del resultado
         return ResultadoCalculo.builder()

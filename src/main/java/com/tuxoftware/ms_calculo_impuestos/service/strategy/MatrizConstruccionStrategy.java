@@ -8,6 +8,7 @@ import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Component
 public class MatrizConstruccionStrategy implements CalculoStrategy {
@@ -94,8 +95,8 @@ public class MatrizConstruccionStrategy implements CalculoStrategy {
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
                 .descripcion(tarifa.getDescripcion() + " - " + reglaSubtipo.path("descripcion").asText())
-                .subtotal(totalPesos)
-                .total(totalPesos)
+                .subtotal(totalPesos.setScale(2, RoundingMode.HALF_UP))
+                .total(totalPesos.setScale(2, RoundingMode.HALF_UP))
                 .metodoCalculo("MATRIZ_CONSTRUCCION")
                 .detalles(detalleCalculo)
                 .build();
