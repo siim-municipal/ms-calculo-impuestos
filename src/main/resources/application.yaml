@@ -41,7 +41,7 @@ app:
     client-id: ${KEYCLOAK_CLIENT_ID:siim-frontend}
   calculo:
     # Porcentaje del impuesto adicional (0.10 = 10%)
-    impuesto-adicional: 0.10
+    impuesto-adicional: ${IMPUESTO_ADICIONAL:0.10}
 
 eureka:
   client:
