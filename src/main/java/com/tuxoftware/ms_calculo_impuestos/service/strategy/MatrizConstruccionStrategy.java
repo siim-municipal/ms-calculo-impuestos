@@ -3,48 +3,47 @@ package com.tuxoftware.ms_calculo_impuestos.service.strategy;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.tuxoftware.ms_calculo_impuestos.dto.response.ResultadoCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.request.SolicitudCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.RubroCalculo;
+import com.tuxoftware.ms_calculo_impuestos.enums.TipoRubro;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
 import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class MatrizConstruccionStrategy implements CalculoStrategy {
 
     @Override
     public ResultadoCalculo calcular(SolicitudCalculo solicitud, Tarifa tarifa, BigDecimal valorUma) {
-        // 1. Obtener la base gravable (Metros Cuadrados o Lineales)
-        BigDecimal baseGravable = solicitud.getBaseCalculo();
-        if (baseGravable == null) {
-            throw new IllegalArgumentException("Se requieren los M2 o ML en 'baseCalculo' para Licencia de Construcción");
-        }
-
-        // 2. Leer configuración y selector
+        BigDecimal baseGravable = solicitud.getBaseCalculo(); // M2 o ML
         JsonNode config = tarifa.getParametrosRegla();
         String selectorKey = config.path("selector_key").asText("subtipo");
-
-        // 3. Determinar el subtipo solicitado (HABITACIONAL, COMERCIAL, BARDAS...)
-        if (solicitud.getParametrosExtra() == null || !solicitud.getParametrosExtra().containsKey(selectorKey)) {
-            throw new IllegalArgumentException("Falta el parámetro extra: " + selectorKey);
-        }
         String subtipo = solicitud.getParametrosExtra().get(selectorKey);
+        BigDecimal factorAplicable = BigDecimal.ZERO;
 
-        // 4. Buscar la regla específica para ese subtipo
         JsonNode reglaSubtipo = config.path("reglas").path(subtipo);
-        if (reglaSubtipo.isMissingNode()) {
-            throw new IllegalArgumentException("El subtipo '" + subtipo + "' no está configurado en las tarifas de construcción.");
-        }
-
         String modoCobro = reglaSubtipo.path("modo_cobro").asText();
+
+        List<RubroCalculo> desglose = new ArrayList<>();
+
+        // Informativo
+        desglose.add(RubroCalculo.builder()
+                .concepto("Superficie/Longitud Declarada")
+                .monto(baseGravable)
+                .detalles(modoCobro.equals("ESCALONADO_EXCEDENTE") ? "ML" : "M2")
+                .tipo(TipoRubro.INFORMATIVO)
+                .build());
+
         BigDecimal totalUma = BigDecimal.ZERO;
         String detalleCalculo = "";
 
-        // 5. Aplicar lógica según el modo de cobro interno
         if ("FACTOR_POR_UNIDAD".equals(modoCobro)) {
-            // Caso Habitacional/Comercial: Busca en qué rango caen los M2 y multiplica M2 * Factor
-            BigDecimal factorAplicable = BigDecimal.ZERO;
             boolean rangoEncontrado = false;
 
             for (JsonNode rango : reglaSubtipo.path("rangos")) {
@@ -64,44 +63,65 @@ public class MatrizConstruccionStrategy implements CalculoStrategy {
 
             // Fórmula: M2 * FactorUMA
             totalUma = baseGravable.multiply(factorAplicable);
-            detalleCalculo = String.format("Subtipo: %s. Rango detectado. Factor: %s UMA/m2", subtipo, factorAplicable);
+            detalleCalculo = String.format(
+                    "Subtipo: %s. Rango detectado. Factor: %s UMA/m2 Total del UMA: %s",
+                    subtipo, factorAplicable, totalUma);
+
+            BigDecimal total = baseGravable.multiply(factorAplicable).multiply(valorUma).setScale(2, RoundingMode.HALF_UP);
+
+            desglose.add(RubroCalculo.builder()
+                    .concepto("Licencia de Construcción")
+                    .detalles(detalleCalculo)
+                    .monto(total)
+                    .tipo(TipoRubro.CARGO)
+                    .build());
 
         } else if ("ESCALONADO_EXCEDENTE".equals(modoCobro)) {
-            // Caso Bardas: Primeros 50m a precio X, el resto a precio Y
+            // Lógica de Bardas: Primeros X metros precio A, siguientes precio B
             BigDecimal limiteBase = new BigDecimal(reglaSubtipo.path("limite_base").asText());
-            BigDecimal costoBase = new BigDecimal(reglaSubtipo.path("costo_base").asText());
-            BigDecimal costoExcedente = new BigDecimal(reglaSubtipo.path("costo_excedente").asText());
+            BigDecimal costoBase = new BigDecimal(reglaSubtipo.path("costo_base").asText()).multiply(valorUma);
+            BigDecimal costoExcedente = new BigDecimal(reglaSubtipo.path("costo_excedente").asText()).multiply(valorUma);
 
-            if (baseGravable.compareTo(limiteBase) <= 0) {
-                // Solo cobra la base (por metro)
-                totalUma = baseGravable.multiply(costoBase);
-            } else {
-                // Cobra los primeros X metros a precio base
-                BigDecimal parteBase = limiteBase.multiply(costoBase);
-                // Cobra el resto a precio excedente
-                BigDecimal excedente = baseGravable.subtract(limiteBase);
-                BigDecimal parteExcedente = excedente.multiply(costoExcedente);
+            // Parte Base
+            BigDecimal metrosBase = baseGravable.min(limiteBase);
+            desglose.add(RubroCalculo.builder()
+                    .concepto("Derechos (Tarifa Base)")
+                    .detalles(String.format("Primeros %s ML", metrosBase))
+                    .monto(metrosBase.multiply(costoBase).setScale(2, RoundingMode.HALF_UP))
+                    .tipo(TipoRubro.CARGO)
+                    .build());
 
-                totalUma = parteBase.add(parteExcedente);
+            // Parte Excedente
+            if (baseGravable.compareTo(limiteBase) > 0) {
+                BigDecimal metrosExtra = baseGravable.subtract(limiteBase);
+                desglose.add(RubroCalculo.builder()
+                        .concepto("Derechos (Excedente)")
+                        .detalles(String.format("%s ML adicionales", metrosExtra))
+                        .monto(metrosExtra.multiply(costoExcedente).setScale(2, RoundingMode.HALF_UP))
+                        .tipo(TipoRubro.CARGO)
+                        .build());
             }
-            detalleCalculo = String.format("Subtipo: %s. Esquema escalonado con límite base de %s m.", subtipo, limiteBase);
-        } else {
-            throw new UnsupportedOperationException("Modo de cobro no soportado: " + modoCobro);
         }
 
-        // 6. Convertir UMA a Pesos
-        BigDecimal totalPesos = totalUma.multiply(valorUma);
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("uma_utilizada", valorUma);
+        metadata.put("subtipo_obra", subtipo);
+        metadata.put("modo_cobro", modoCobro);
 
-        return ResultadoCalculo.builder()
+        if ("FACTOR_POR_UNIDAD".equals(modoCobro)) {
+            metadata.put("factor_m2_aplicado", factorAplicable);
+        }
+
+        ResultadoCalculo res = ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
-                .descripcion(tarifa.getDescripcion() + " - " + reglaSubtipo.path("descripcion").asText())
-                .subtotal(totalPesos.setScale(2, RoundingMode.HALF_UP))
-                .total(totalPesos.setScale(2, RoundingMode.HALF_UP))
+                .descripcion(tarifa.getDescripcion())
+                .desglose(desglose)
                 .metodoCalculo("MATRIZ_CONSTRUCCION")
-                .detalles(detalleCalculo)
+                .metadatos(metadata)
                 .build();
-    }
 
-    @Override
-    public String getTipoFormula() { return "MATRIZ_CONSTRUCCION"; }
+        res.recalcularTotal();
+        return res;
+    }
+    @Override public String getTipoFormula() { return "MATRIZ_CONSTRUCCION"; }
 }

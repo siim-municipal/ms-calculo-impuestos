@@ -80,4 +80,10 @@ public class GlobalExceptionHandler {
         ex.printStackTrace();
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<String> handleSecurityViolation(SecurityException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body("Acceso Denegado: " + ex.getMessage());
+    }
 }

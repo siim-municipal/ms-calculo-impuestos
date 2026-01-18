@@ -3,74 +3,75 @@ package com.tuxoftware.ms_calculo_impuestos.service.strategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tuxoftware.ms_calculo_impuestos.dto.response.ResultadoCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.request.SolicitudCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.RubroCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.rules.ConfigRangos;
 import com.tuxoftware.ms_calculo_impuestos.dto.rules.Rango;
+import com.tuxoftware.ms_calculo_impuestos.enums.TipoRubro;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
 import com.tuxoftware.ms_calculo_impuestos.service.CalculoStrategy;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Component
 public class CalculoRangosAguaStrategy implements CalculoStrategy {
-
-    // ObjectMapper es thread-safe, se puede instanciar aquí o inyectar
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
     public ResultadoCalculo calcular(SolicitudCalculo solicitud, Tarifa tarifa, BigDecimal valorUma) {
-        // 1. Convertir el JSONB a objeto Java (ConfigRangos)
         ConfigRangos config = mapper.convertValue(tarifa.getParametrosRegla(), ConfigRangos.class);
+        BigDecimal consumo = solicitud.getBaseCalculo(); // m3
 
-        // 2. Obtener base gravable (m3 consumidos)
-        BigDecimal consumo = solicitud.getBaseCalculo();
-
-        if (consumo == null) {
-            throw new IllegalArgumentException("Se requiere 'baseCalculo' (m3) para calcular agua potable");
-        }
+        if (consumo == null) throw new IllegalArgumentException("Requiere m3 en baseCalculo");
 
         BigDecimal factorUma = null;
-
-        // 3. Buscar en qué rango cae el consumo
-        // El PDF (Art 74) define rangos como "De 1 a 50", "De 50.01 a 100", etc.
+        // Buscar rango
         for (Rango r : config.getRangos()) {
-            // Lógica: consumo >= min AND consumo <= max
             if (consumo.compareTo(r.getMin()) >= 0 && consumo.compareTo(r.getMax()) <= 0) {
                 factorUma = r.getCostoUnitario();
                 break;
             }
         }
 
-        // Validación de seguridad: ¿Qué pasa si el consumo excede el rango máximo configurado?
-        BigDecimal total = determineWaterExpense(valorUma, factorUma, consumo);
+        // (validación null factorUma)
+        if (factorUma == null) throw new RuntimeException("Rango no encontrado para consumo: " + consumo);
 
-        // 6. Construir respuesta completa
+        List<RubroCalculo> desglose = new ArrayList<>();
+
+        // Rubro Informativo
+        desglose.add(RubroCalculo.builder()
+                .concepto("Consumo de Agua")
+                .monto(consumo)
+                .detalles("Metros cúbicos (m3)")
+                .tipo(TipoRubro.INFORMATIVO)
+                .build());
+
+        // Rubro Cargo
+        BigDecimal total = factorUma.multiply(valorUma).multiply(consumo).setScale(2, RoundingMode.HALF_UP);
+
+        desglose.add(RubroCalculo.builder()
+                .concepto(tarifa.getDescripcion())
+                .detalles(String.format("Rango aplicado: %s UMA/m3", factorUma))
+                .monto(total)
+                .tipo(TipoRubro.CARGO)
+                .build());
+
         return ResultadoCalculo.builder()
                 .claveConcepto(tarifa.getClaveConcepto())
                 .descripcion(tarifa.getDescripcion())
-                .subtotal(total.setScale(2, RoundingMode.HALF_UP))
-                .total(total.setScale(2, RoundingMode.HALF_UP))
+                .desglose(desglose)
+                .total(total)
                 .metodoCalculo("AGUA_RANGOS")
-                .detalles(String.format("Consumo: %s m3. Tarifa aplicada: %.2f UMA/m3 (Rango detectado)", consumo, factorUma))
+                .metadatos(Map.of(
+                        "uma_utilizada", valorUma,
+                        "consumo_registrado", consumo,
+                        "factor_rango_aplicado", factorUma // Ej: 1.25 UMA/m3
+                ))
                 .build();
     }
-
-    private static BigDecimal determineWaterExpense(BigDecimal valorUma, BigDecimal factorUma, BigDecimal consumo) {
-        if (factorUma == null) {
-            throw new RuntimeException("El consumo de " + consumo + " m3 está fuera de los rangos configurados en la tarifa.");
-        }
-
-        // 4. Calcular: (FactorUMA * ValorUMA) * Consumo
-        // Según PDF Art 74: "Costo en UMA por M3" -> El factor aplica a CADA metro cúbico.
-        BigDecimal costoPorMetroCubico = factorUma.multiply(valorUma);
-        BigDecimal total = costoPorMetroCubico.multiply(consumo);
-
-        // 5. Redondeo a 2 decimales (Moneda)
-        total = total.setScale(2, RoundingMode.HALF_UP);
-        return total;
-    }
-
-    @Override
-    public String getTipoFormula() { return "AGUA_RANGOS"; }
+    @Override public String getTipoFormula() { return "AGUA_RANGOS"; }
 }

@@ -78,9 +78,6 @@ class ImpuestosStrategiesTest {
         assertEquals(0, esperado.compareTo(resultado.getTotal()),
                 "El cálculo del agua falló para consumo: " + consumoStr);
 
-        // Verificación parcial del string
-        assertTrue(resultado.getDetalles().contains(factorEsperado),
-                "El detalle debería mencionar el factor " + factorEsperado);
     }
 
     @Test

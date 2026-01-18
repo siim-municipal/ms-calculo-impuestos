@@ -1,9 +1,11 @@
 package com.tuxoftware.ms_calculo_impuestos.service.impl;
 
 import com.tuxoftware.ms_calculo_impuestos.client.PadronClient;
-import com.tuxoftware.ms_calculo_impuestos.dto.feign.LicenciaDetalleDTO;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.InfoFiscalDTO;
 import com.tuxoftware.ms_calculo_impuestos.dto.response.ResultadoCalculo;
 import com.tuxoftware.ms_calculo_impuestos.dto.request.SolicitudCalculo;
+import com.tuxoftware.ms_calculo_impuestos.dto.response.RubroCalculo;
+import com.tuxoftware.ms_calculo_impuestos.enums.TipoRubro;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Tarifa;
 import com.tuxoftware.ms_calculo_impuestos.persistence.entity.Uma;
 import com.tuxoftware.ms_calculo_impuestos.persistence.repository.TarifasRepository;
@@ -53,7 +55,7 @@ public class CalculoServiceImpl implements CalculoService {
         ).orElseThrow(() -> new RuntimeException("Tarifa no encontrada: " + solicitud.getClaveConcepto()));
 
         // 4. Resolver Base Gravable (Orquestación Padrón vs Manual)
-        resolverBaseGravable(solicitud, tarifa);
+        resolverBaseGravable(solicitud, tarifa, municipioAlias);
 
         // 5. Ejecutar Estrategia Matemática
         CalculoStrategy estrategia = strategyFactory.getEstrategia(tarifa.getTipoFormula());
@@ -61,6 +63,9 @@ public class CalculoServiceImpl implements CalculoService {
 
         // 6. Aplicar Impuesto Adicional (Art. 43)
         aplicarImpuestoAdicional(resultado, tarifa);
+
+        // 7. Recalcular Total Final (Suma de toda la lista)
+        resultado.recalcularTotal();
 
         return resultado;
     }
@@ -77,48 +82,69 @@ public class CalculoServiceImpl implements CalculoService {
                 });
     }
 
-    private void resolverBaseGravable(SolicitudCalculo solicitud, Tarifa tarifa) {
+    private void resolverBaseGravable(SolicitudCalculo solicitud, Tarifa tarifa, String tenantId) {
         if (solicitud.getReferenciaId() != null && !solicitud.getReferenciaId().isBlank()) {
             try {
-                BigDecimal baseRemota = consultarPadron(solicitud.getReferenciaId(), tarifa);
+                // Delegamos a la consulta segura
+                BigDecimal baseRemota = consultarPadronSeguro(solicitud.getReferenciaId(), tarifa, tenantId);
                 solicitud.setBaseCalculo(baseRemota);
-                log.info("Base gravable obtenida de Padrón: {}", baseRemota);
+                log.info("Base gravable validada y obtenida: {}", baseRemota);
+            } catch (SecurityException se) {
+                // Re-lanzamos errores de seguridad para que suban como 403 Forbidden
+                log.error("ALERTA DE SEGURIDAD: {}", se.getMessage());
+                throw se;
             } catch (Exception e) {
                 if (solicitud.getBaseCalculo() == null) throw e;
-                log.warn("Fallo al consultar Padrón, usando base manual proporcionada.");
+                log.warn("Fallo al consultar Padrón, usando base manual. Error: {}", e.getMessage());
             }
         }
     }
 
-    private BigDecimal consultarPadron(String referenciaId, Tarifa tarifa) {
-        // Usamos un campo de la tarifa para saber a qué endpoint llamar
-        // Asumimos que Tarifa tiene un campo 'tipoObjeto' o deducimos por prefijo
+    private BigDecimal consultarPadronSeguro(String referenciaId, Tarifa tarifa, String tokenAlias) {
         String tipo = tarifa.getParametrosRegla().path("tipo_objeto").asText("GENERICO");
+        InfoFiscalDTO infoRemota;
 
-        return switch (tipo) {
-            case "PREDIO" -> padronClient.obtenerValorCatastral(referenciaId);
-            case "LICENCIA" -> {
-                LicenciaDetalleDTO licencia = padronClient.obtenerDetalleLicencia(referenciaId);
-                yield licencia.metrosCuadrados(); // O la propiedad que sirva de base
-            }
-            default -> throw new IllegalArgumentException("No se puede resolver referencia automática para tipo: " + tipo);
-        };
+        // Obtener DTO completo según el tipo
+        switch (tipo) {
+            case "PREDIO" -> infoRemota = padronClient.obtenerInfoPredio(referenciaId);
+            case "LICENCIA" -> infoRemota = padronClient.obtenerInfoLicencia(referenciaId);
+            default -> throw new IllegalArgumentException("Tipo no soportado para consulta remota: " + tipo);
+        }
+
+        // 🛡CHECKPOINT DE SEGURIDAD (Tenant Isolation)
+        if (!infoRemota.municipioAlias().equals(tokenAlias)) {
+            throw new SecurityException("Tenant Mismatch");
+        }
+
+        // Validación de Negocio (Opcional)
+        if (!"ACTIVO".equals(infoRemota.estatus())) {
+            throw new IllegalArgumentException("El recurso solicitado no está activo (Estatus: " + infoRemota.estatus() + ")");
+        }
+
+        return infoRemota.valorBase();
     }
 
     private void aplicarImpuestoAdicional(ResultadoCalculo resultado, Tarifa tarifa) {
         if (Boolean.TRUE.equals(tarifa.getAplicaAdicional())) {
-            BigDecimal subtotal = resultado.getTotal();
-            BigDecimal adicional = subtotal.multiply(porcentajeAdicional);
-            BigDecimal nuevoTotal = subtotal.add(adicional).setScale(2, RoundingMode.HALF_UP);
-            resultado.setTotal(nuevoTotal);
 
-            String porcentajeTexto = porcentajeAdicional.multiply(new BigDecimal(100))
-                    .stripTrailingZeros().toPlainString();
+            // Calculamos la base sobre la cual aplica el adicional (suma de cargos actuales)
+            BigDecimal sumaCargos = resultado.getDesglose().stream()
+                    .filter(r -> r.getTipo() == TipoRubro.CARGO)
+                    .map(RubroCalculo::getMonto)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            resultado.setDetalles(resultado.getDetalles() +
-                    String.format(" [+%s%% Adicional Ecológico: $%s]",
-                            porcentajeTexto,
-                            adicional.setScale(2, RoundingMode.HALF_UP)));
+            BigDecimal montoAdicional = sumaCargos.multiply(porcentajeAdicional)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            if (montoAdicional.compareTo(BigDecimal.ZERO) > 0) {
+                resultado.getDesglose().add(RubroCalculo.builder()
+                        .concepto("Impuesto Adicional (Ecológico/Infraestructura)")
+                        .monto(montoAdicional)
+                        .tipo(TipoRubro.CARGO)
+                        .esImpuestoAdicional(true) // Flag para pintar ROJO en Front
+                        .detalles(porcentajeAdicional.multiply(BigDecimal.valueOf(100)) + "%")
+                        .build());
+            }
         }
     }
 }
