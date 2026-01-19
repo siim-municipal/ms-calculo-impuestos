@@ -40,7 +40,7 @@ public class MatrizConstruccionStrategy implements CalculoStrategy {
                 .tipo(TipoRubro.INFORMATIVO)
                 .build());
 
-        BigDecimal totalUma = BigDecimal.ZERO;
+        BigDecimal totalUma;
         String detalleCalculo = "";
 
         if ("FACTOR_POR_UNIDAD".equals(modoCobro)) {
