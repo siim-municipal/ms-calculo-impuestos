@@ -24,7 +24,7 @@ DO $$
                      gen_random_uuid(),
                      v_municipio_id,
                      'AGUA_DOMESTICO',
-                     2025,
+                     2026,
                      'Servicio de Agua Medido Doméstico (Art. 74)',
                      'AGUA_RANGOS',
                      '{
@@ -58,7 +58,7 @@ DO $$
                      gen_random_uuid(),
                      v_municipio_id,
                      'IMP_TRASLADO',
-                     2025,
+                     2026,
                      'Impuesto s/ Traslación de Dominio (Art. 35)',
                      'RANGOS_CON_EXCEDENTE',
                      '{
@@ -92,7 +92,7 @@ DO $$
                      gen_random_uuid(),
                      v_municipio_id,
                      'LIC_ALCOHOL',
-                     2025,
+                     2026,
                      'Licencias de funcionamiento Alcoholes (Art. 119)',
                      'MAPA_VALORES',
                      '{
@@ -125,7 +125,7 @@ DO $$
                      gen_random_uuid(),
                      v_municipio_id,
                      'IMP_PREDIAL_URBANO',
-                     2025,
+                     2026,
                      'Impuesto Predial Urbano (Art. 17)',
                      'PORCENTAJE_CON_MINIMO',
                      '{
@@ -153,7 +153,7 @@ DO $$
                      gen_random_uuid(),
                      v_municipio_id,
                      'LIC_CONSTRUCCION',
-                     2025,
+                     2026,
                      'Licencia de Construcción (Art. 99)',
                      'MATRIZ_CONSTRUCCION',
                      '{
@@ -208,7 +208,7 @@ DO $$
          gen_random_uuid(),
          v_municipio_id,
          'REG-COPIAS',
-         2025,
+         2026,
          'Copias certificadas de documentos (Art. 97)',
          'CUOTA_FIJA',
          '{
@@ -232,7 +232,7 @@ DO $$
             gen_random_uuid(),
             v_municipio_id,
             'ASEO_COMERCIAL',
-            2025,
+            2026,
             'Recolección Basura Comercial',
             'BASURA_POR_ZONA',
             '{
